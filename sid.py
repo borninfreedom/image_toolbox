@@ -158,6 +158,7 @@ class SID_Process():
 
         in_img = torch.from_numpy(input_full).permute(0,3,1,2).to(self.device)
         in_img = F.interpolate(in_img, size=(1424, 2128), mode='bilinear', align_corners=False)
+        print(f'{in_img.shape = }')
         out_img = self.model(in_img)
         output = out_img.permute(0, 2, 3, 1).cpu().data.numpy()
         output = np.minimum(np.maximum(output,0),1)
@@ -207,3 +208,50 @@ class NightEnhancer:
                 continue
 
         yield "处理完成", None, None, f"进度：{total_files}/{total_files} 已处理"
+
+
+def export_onnx():
+    import onnx
+    import onnxsim
+    from onnx import shape_inference
+    model = SeeInDark()
+    input_ = torch.randn(1, 4, 1424, 2128)
+    onnx_path = "sid.onnx"
+    torch.onnx.export(
+        model,        # 模型
+        input_,                   # 输入
+        onnx_path,                # 导出路径
+        opset_version=11,         # ONNX Opset版本
+        input_names=["input"],    # 输入名称
+        output_names=["output"],  # 输出名称
+    )
+    print(f"Model exported to {onnx_path}")
+
+    # 3. 简化 ONNX 模型
+    simplified_onnx_path = "sid_sim.onnx"
+    model = onnx.load(onnx_path)
+    model_simplified, check = onnxsim.simplify(model)
+    if check:
+        onnx.save(model_simplified, simplified_onnx_path)
+        print(f"Simplified ONNX model saved to {simplified_onnx_path}")
+    else:
+        print("Simplification failed!")
+
+    # 4. 使用 ONNX Shape Inference 推导 Feature Map 的 Shape
+    inferred_model = shape_inference.infer_shapes(onnx.load(simplified_onnx_path))
+    onnx.save(inferred_model, "restormer_inferred.onnx")
+    print("Shape inference completed and model saved as 'restormer_inferred.onnx'")
+
+    # 5. 打印推导出的中间层 Feature Map 的 Shape
+    for node in inferred_model.graph.value_info:
+        name = node.name
+        shape = [
+            dim.dim_value if dim.dim_value != 0 else "dynamic"
+            for dim in node.type.tensor_type.shape.dim
+        ]
+        print(f"Feature Map Name: {name}, Shape: {shape}")
+
+
+if __name__=='__main__':
+    export_onnx()
+

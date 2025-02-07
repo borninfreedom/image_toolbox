@@ -22,7 +22,9 @@
 
 ![](https://github.com/borninfreedom/image_toolbox/blob/main/assets/night_batch.gif)
 
-如gif所示，此批量处理功能具有优美直观的UI，可以选择要处理的输入文件夹以及输出文件夹，可以看到当前正在处理的进度以及当前正在处理图像的原图和处理后的图像。
+![](https://github.com/borninfreedom/image_toolbox/blob/main/assets/5.png)
+
+如gif所示(gif文件比较大，加载可能需要一会），此批量处理功能具有优美直观的UI，可以选择要处理的输入文件夹以及输出文件夹，可以看到当前正在处理的进度以及当前正在处理图像的原图和处理后的图像。
 
 
 
